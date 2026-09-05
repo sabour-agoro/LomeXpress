@@ -8,7 +8,7 @@ import GlassSurface from "@/components/ui/glass-surface";
 const stats = [
   { value: "24h", label: "Livraison locale" },
   { value: "Europe / USA", label: "Importation express" },
-  { value: "100%", label: "Paiement sécurisé" },
+  { value: "WhatsApp", label: "Paiement convenu avec l’équipe" },
 ];
 
 export function HeroSection() {
@@ -22,9 +22,9 @@ export function HeroSection() {
               Service local
             </span>
             <h1 className="mt-5 font-display text-4xl font-bold leading-tight md:text-5xl">
-              Expedition
+              Expédition
               <br />
-              Express Lome
+              Express Lomé
             </h1>
             <p className="mt-4 text-sm text-muted-foreground">
               Livraison locale en 24h pour vos produits essentiels et premium.
@@ -53,7 +53,7 @@ export function HeroSection() {
             </p>
             <div className="mt-6">
               <Button asChild size="lg" variant="secondary">
-                <Link href="/commande-speciale">Demarrer ma demande</Link>
+                <Link href="/commande-speciale">Démarrer ma demande</Link>
               </Button>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function HeroSection() {
           <GiTruck className="h-8 w-8 text-brand-500 drop-shadow-sm" /> Livraison toute la zone Togo
         </span>
         <span className="flex items-center gap-2 text-sm">
-          <GiCheckedShield className="h-8 w-8 text-emerald-600 drop-shadow-sm" /> Securite garantie
+          <GiCheckedShield className="h-8 w-8 text-emerald-600 drop-shadow-sm" /> Sécurité garantie
         </span>
       </div>
     </section>

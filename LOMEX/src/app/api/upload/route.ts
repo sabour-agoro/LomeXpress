@@ -1,44 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-admin";
+
+const MAX_FILES = 8;
+const MAX_BYTES = 2 * 1024 * 1024;
+const ALLOWED_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const guard = await requireAdmin();
+    if (guard) return guard;
 
     const formData = await req.formData();
-    const files = formData.getAll("files") as File[];
+    const files = formData.getAll("files").filter((entry): entry is File => entry instanceof File);
 
-    if (!files || files.length === 0) {
+    if (files.length === 0) {
       return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
+    }
+    if (files.length > MAX_FILES) {
+      return NextResponse.json({ error: `Maximum ${MAX_FILES} fichiers.` }, { status: 400 });
     }
 
     const uploadDir = join(process.cwd(), "public/uploads");
-    
-    // Ensure the uploads directory exists
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (e) {
-      console.error("Erreur création dossier:", e);
-    }
+    await mkdir(uploadDir, { recursive: true });
 
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+      const mime = file.type;
+      const extFromMime = ALLOWED_TYPES[mime];
+      if (!extFromMime) {
+        return NextResponse.json(
+          { error: `Type non autorisé : ${file.name}. JPEG, PNG, WebP ou GIF uniquement.` },
+          { status: 400 },
+        );
+      }
+      if (file.size > MAX_BYTES) {
+        return NextResponse.json(
+          { error: `${file.name} dépasse 2 Mo.` },
+          { status: 400 },
+        );
+      }
 
-      // Create a unique filename
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      const filename = `${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      
-      const filepath = join(uploadDir, filename);
-      await writeFile(filepath, buffer);
-      
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const ext = extFromMime;
+      const filename = `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`;
+      await writeFile(join(uploadDir, filename), buffer);
       uploadedUrls.push(`/uploads/${filename}`);
     }
 

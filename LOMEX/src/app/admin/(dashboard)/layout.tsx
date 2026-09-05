@@ -1,17 +1,19 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { Bell, LogOut, Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminSessionProvider } from "@/components/admin/admin-session-provider";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardLayout({ children }: { children: ReactNode }) {
   const session = await auth();
-  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+  if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin/login");
   }
 
   return (
+    <AdminSessionProvider>
     <div className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[260px_1fr]">
       <AdminSidebar />
       <div className="flex min-h-screen flex-col">
@@ -23,7 +25,7 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <form action="" className="relative hidden md:block">
+            <form action="/admin/produits" className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 name="q"
@@ -48,5 +50,6 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
     </div>
+    </AdminSessionProvider>
   );
 }

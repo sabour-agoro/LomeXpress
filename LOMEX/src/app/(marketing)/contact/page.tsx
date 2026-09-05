@@ -28,14 +28,14 @@ export default function ContactPage() {
         </p>
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <ElectricBorder color="#10b981" borderRadius={24} chaos={0.1} thickness={2}>
+          <ElectricBorder color="#10b981" borderRadius={24} chaos={0.08} thickness={2}>
             <a
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-3xl border border-white/5 bg-card/40 p-6 transition-colors hover:bg-card/60"
+              className="block rounded-3xl bg-card p-6 transition-colors hover:bg-muted/40"
             >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700">
                 <MessageCircle className="h-5 w-5" />
               </span>
               <h2 className="mt-4 font-display text-lg font-semibold">WhatsApp Business</h2>
@@ -43,12 +43,12 @@ export default function ContactPage() {
             </a>
           </ElectricBorder>
 
-          <ElectricBorder color="#a855f7" borderRadius={24} chaos={0.1} thickness={2}>
+          <ElectricBorder color="#a855f7" borderRadius={24} chaos={0.08} thickness={2}>
             <a
               href={`tel:+${siteConfig.whatsappNumber}`}
-              className="block rounded-3xl border border-white/5 bg-card/40 p-6 transition-colors hover:bg-card/60"
+              className="block rounded-3xl bg-card p-6 transition-colors hover:bg-muted/40"
             >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-brand-300">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
                 <Phone className="h-5 w-5" />
               </span>
               <h2 className="mt-4 font-display text-lg font-semibold">Appel direct</h2>
@@ -56,12 +56,12 @@ export default function ContactPage() {
             </a>
           </ElectricBorder>
 
-          <ElectricBorder color="#0ea5e9" borderRadius={24} chaos={0.1} thickness={2}>
+          <ElectricBorder color="#0ea5e9" borderRadius={24} chaos={0.08} thickness={2}>
             <a
               href={`mailto:${siteConfig.contactEmail}`}
-              className="block rounded-3xl border border-white/5 bg-card/40 p-6 transition-colors hover:bg-card/60"
+              className="block rounded-3xl bg-card p-6 transition-colors hover:bg-muted/40"
             >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/15 text-sky-300">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/15 text-sky-700">
                 <Mail className="h-5 w-5" />
               </span>
               <h2 className="mt-4 font-display text-lg font-semibold">Email</h2>
@@ -69,9 +69,9 @@ export default function ContactPage() {
             </a>
           </ElectricBorder>
 
-          <ElectricBorder color="#ffffff" borderRadius={24} chaos={0.05} thickness={2}>
-            <div className="rounded-3xl border border-white/5 bg-card/40 p-6">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-foreground">
+          <ElectricBorder color="#C23A1F" borderRadius={24} chaos={0.05} thickness={2}>
+            <div className="rounded-3xl bg-card p-6">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
                 <MapPin className="h-5 w-5" />
               </span>
               <h2 className="mt-4 font-display text-lg font-semibold">Adresse</h2>

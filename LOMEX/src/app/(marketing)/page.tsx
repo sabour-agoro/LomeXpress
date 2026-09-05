@@ -33,14 +33,14 @@ export default async function HomePage() {
       <HeroSection />
       <CategoryGrid categories={categories} />
       <ProductDomeSection
-        title="Selection locale express"
-        subtitle="Les produits livrables rapidement a Lome et ses environs."
-        products={popular}
+        title="Sélection locale express"
+        subtitle="Les produits livrables rapidement à Lomé et ses environs."
+        products={popular.length > 0 ? popular : latest}
       />
       <ValuePropositions />
       <ProductCarousel
-        title="Nouveautes boutique premium"
-        subtitle="Catalogue enrichi en continu pour vos commandes locales et importees."
+        title="Nouveautés boutique premium"
+        subtitle="Catalogue enrichi en continu pour vos commandes locales et importées."
         products={latest}
       />
       <SpecialOrderCta />

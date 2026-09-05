@@ -1,26 +1,37 @@
 "use client";
 
 import { useMemo } from "react";
-import DomeGallery from "@/components/ui/dome-gallery";
-import { parseProductImages } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import { displayProductImages, productCover } from "@/lib/utils";
+
+const DomeGallery = dynamic(() => import("@/components/ui/dome-gallery"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-muted/30" aria-hidden />,
+});
 
 interface ProductDomeSectionProps {
-  products: any[];
+  products: {
+    name: string;
+    price: number;
+    description: string;
+    slug: string;
+    images: string;
+  }[];
   title: string;
   subtitle: string;
 }
 
 export function ProductDomeSection({ products, title, subtitle }: ProductDomeSectionProps) {
   const images = useMemo(() => {
-    return products.flatMap((p) => {
-      const imgs = parseProductImages(p.images);
-      return imgs.map((src) => ({ 
-        src, 
-        alt: p.name,
-        price: p.price,
-        description: p.description,
-        slug: p.slug
-      }));
+    return products.map((product) => {
+      const srcs = displayProductImages(product.images);
+      return {
+        src: srcs[0] ?? productCover(product.images),
+        alt: product.name,
+        price: product.price,
+        description: product.description,
+        slug: product.slug,
+      };
     });
   }, [products]);
 
@@ -32,15 +43,16 @@ export function ProductDomeSection({ products, title, subtitle }: ProductDomeSec
         <h2 className="font-display text-3xl font-bold">{title}</h2>
         <p className="mt-2 text-muted-foreground">{subtitle}</p>
       </div>
-      <div className="h-[600px] w-full relative">
+      <div className="relative h-[min(70vh,640px)] w-full overflow-hidden">
         <DomeGallery
           images={images}
-          fit={0.8}
-          minRadius={600}
-          maxVerticalRotationDeg={0}
-          segments={34}
+          fit={0.48}
+          minRadius={180}
+          maxVerticalRotationDeg={8}
+          segments={16}
           dragDampening={2}
           grayscale={false}
+          overlayBlurColor="#f7f8fa"
         />
       </div>
     </section>

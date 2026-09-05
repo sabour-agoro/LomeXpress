@@ -8,7 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatXOF, parseProductImages } from "@/lib/utils";
+import { formatXOF, productCover } from "@/lib/utils";
 import { LOW_STOCK_THRESHOLD } from "@/lib/enums";
 import {
   Dialog,
@@ -87,7 +87,7 @@ export function ProductsTable({
           </thead>
           <tbody className="divide-y divide-border">
             {products.map((product) => {
-              const cover = parseProductImages(product.images)[0];
+              const cover = productCover(product.images);
               const lowStock = product.stock <= LOW_STOCK_THRESHOLD;
               return (
                 <tr key={product.id} className="transition hover:bg-muted/40">
@@ -95,7 +95,7 @@ export function ProductsTable({
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-muted">
                         {cover && (
-                          <Image src={cover} alt={product.name} fill className="object-cover" />
+                          <Image src={cover} alt={product.name} fill sizes="48px" className="object-cover" />
                         )}
                       </div>
                       <div>

@@ -13,7 +13,7 @@ export default async function AdminProductsPage({
 }) {
   const query = (await searchParams).q;
 
-  const [products, categories] = await Promise.all([
+  const [products, categories, pendingSpecials] = await Promise.all([
     prisma.product.findMany({
       where: query
         ? {
@@ -27,6 +27,12 @@ export default async function AdminProductsPage({
       orderBy: { createdAt: "desc" },
     }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.specialRequest.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, customerName: true, status: true, productUrl: true },
+    }),
   ]);
 
   return (
@@ -60,14 +66,16 @@ export default async function AdminProductsPage({
         <aside className="h-fit rounded-3xl border border-border bg-card p-5 shadow-soft">
           <h2 className="font-display text-base font-semibold">Demandes de conciergerie</h2>
           <div className="mt-4 space-y-3 text-sm">
-            <div className="rounded-2xl border border-border bg-muted/40 p-3">
-              <p className="font-medium">Alice M. (Import USA)</p>
-              <p className="text-xs text-muted-foreground">En cours</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-muted/40 p-3">
-              <p className="font-medium">Jean-Paul D. (Achat special)</p>
-              <p className="text-xs text-muted-foreground">En attente</p>
-            </div>
+            {pendingSpecials.length === 0 ? (
+              <p className="text-muted-foreground">Aucune demande en attente.</p>
+            ) : (
+              pendingSpecials.map((request) => (
+                <div key={request.id} className="rounded-2xl border border-border bg-muted/40 p-3">
+                  <p className="font-medium">{request.customerName}</p>
+                  <p className="line-clamp-1 text-xs text-muted-foreground">{request.productUrl}</p>
+                </div>
+              ))
+            )}
           </div>
           <Button asChild className="mt-4 w-full">
             <Link href="/admin/demandes-speciales">

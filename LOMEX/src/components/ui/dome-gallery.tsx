@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 
-type ImageItem = string | { src: string; alt?: string };
+type ImageItem =
+  | string
+  | {
+      src: string;
+      alt?: string;
+      price?: number;
+      description?: string;
+      slug?: string;
+    };
 
 type DomeGalleryProps = {
   images?: ImageItem[];
@@ -47,7 +55,7 @@ const DEFAULTS = {
   maxVerticalRotationDeg: 5,
   dragSensitivity: 20,
   enlargeTransitionMs: 300,
-  segments: 35
+  segments: 16
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -64,8 +72,8 @@ const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
 
 function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
   const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2);
-  const evenYs = [-4, -2, 0, 2, 4];
-  const oddYs = [-3, -1, 1, 3, 5];
+  const evenYs = [-2, 0, 2];
+  const oddYs = [-1, 1];
 
   const coords = xCols.flatMap((x, c) => {
     const ys = c % 2 === 0 ? evenYs : oddYs;
@@ -444,7 +452,19 @@ export default function DomeGallery({
               {items.map((it, i) => (
                 <div key={`${it.x},${it.y},${i}`} className="sphere-item absolute m-auto" data-index={i} data-src={it.src} data-offset-x={it.x} data-offset-y={it.y} data-size-x={it.sizeX} data-size-y={it.sizeY} style={{ ['--offset-x' as any]: it.x, ['--offset-y' as any]: it.y, ['--item-size-x' as any]: it.sizeX, ['--item-size-y' as any]: it.sizeY } as any}>
                   <div className="item__image absolute block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300 hover:scale-105" onClick={e => { if (!movedRef.current && performance.now() - lastDragEndAt.current > 80) openItemFromElement(e.currentTarget as HTMLElement); }} style={{ inset: '10px', borderRadius: `var(--tile-radius, ${imageBorderRadius})` }}>
-                    <img src={it.src} draggable={false} alt={it.alt} className="w-full h-full object-cover pointer-events-none" style={{ filter: `var(--image-filter, ${grayscale ? 'grayscale(1)' : 'none'})` }} />
+                    <img
+                      src={it.src}
+                      draggable={false}
+                      alt={it.alt}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover pointer-events-none"
+                      style={{ filter: `var(--image-filter, ${grayscale ? 'grayscale(1)' : 'none'})` }}
+                      onError={(event) => {
+                        event.currentTarget.src =
+                          "https://images.unsplash.com/photo-1586892477838-2b96e85e0f96?auto=format&fit=crop&w=800&q=80";
+                      }}
+                    />
                   </div>
                 </div>
               ))}

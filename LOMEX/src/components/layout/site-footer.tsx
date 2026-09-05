@@ -10,7 +10,7 @@ export function SiteFooter() {
         <div>
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold">
             <div className="relative h-9 w-9 overflow-hidden rounded-2xl shadow-soft">
-              <Image src={LogoImg} alt={siteConfig.name} fill className="object-cover" />
+              <Image src={LogoImg} alt={siteConfig.name} fill sizes="36px" className="object-cover" />
             </div>
             <span className="gradient-text">{siteConfig.name}</span>
           </Link>

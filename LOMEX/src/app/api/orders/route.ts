@@ -5,8 +5,24 @@ import { orderInputSchema } from "@/lib/schemas";
 import { generateReference, formatXOF } from "@/lib/utils";
 import { siteConfig } from "@/lib/config";
 import { notifyAdminNewOrder } from "@/lib/email";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+
+function stockError(name: string) {
+  return NextResponse.json(
+    { error: `Stock insuffisant pour ${name}.` },
+    { status: 400 },
+  );
+}
 
 export async function POST(request: Request) {
+  const limited = rateLimit(`orders:${clientIp(request)}`, 8, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez dans une minute." },
+      { status: 429 },
+    );
+  }
+
   let payload;
   try {
     payload = await request.json();
@@ -48,13 +64,9 @@ export async function POST(request: Request) {
       );
     }
     if (product.stock < input.quantity) {
-      return NextResponse.json(
-        { error: `Stock insuffisant pour ${product.name}.` },
-        { status: 400 },
-      );
+      return stockError(product.name);
     }
-    const lineTotal = product.price * input.quantity;
-    total += lineTotal;
+    total += product.price * input.quantity;
     itemsToCreate.push({
       product: { connect: { id: product.id } },
       quantity: input.quantity,
@@ -63,22 +75,71 @@ export async function POST(request: Request) {
     });
   }
 
-  const reference = generateReference("LOM");
+  let order;
+  try {
+    order = await prisma.$transaction(async (tx) => {
+      for (const input of data.items) {
+        const product = productMap.get(input.productId)!;
+        const reserved = await tx.product.updateMany({
+          where: {
+            id: product.id,
+            isPublished: true,
+            stock: { gte: input.quantity },
+          },
+          data: { stock: { decrement: input.quantity } },
+        });
+        if (reserved.count !== 1) {
+          throw new Error(`STOCK:${product.name}`);
+        }
+      }
 
-  const order = await prisma.order.create({
-    data: {
-      reference,
-      status: "PENDING",
-      channel: data.channel,
-      customerName: data.customerName,
-      customerPhone: data.customerPhone,
-      customerEmail: data.customerEmail || null,
-      notes: data.notes || null,
-      total,
-      items: { create: itemsToCreate },
-    },
-    include: { items: true },
-  });
+      let created = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const reference = generateReference("LOM");
+        try {
+          created = await tx.order.create({
+            data: {
+              reference,
+              status: "PENDING",
+              channel: data.channel,
+              customerName: data.customerName,
+              customerPhone: data.customerPhone,
+              customerEmail: data.customerEmail || null,
+              notes: data.notes || null,
+              total,
+              items: { create: itemsToCreate },
+            },
+            include: { items: true },
+          });
+          break;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            continue;
+          }
+          throw error;
+        }
+      }
+      if (!created) throw new Error("REFERENCE");
+
+      await tx.stockLog.createMany({
+        data: created.items.map((item) => ({
+          productId: item.productId,
+          delta: -item.quantity,
+          reason: "ORDER",
+          reference: created!.reference,
+        })),
+      });
+
+      return created;
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.startsWith("STOCK:")) {
+      return stockError(message.slice(6));
+    }
+    console.error("[orders] create failed", error);
+    return NextResponse.json({ error: "Impossible de créer la commande." }, { status: 500 });
+  }
 
   const messageLines = [
     `Bonjour LomExpress, je souhaite passer la commande ${order.reference} :`,

@@ -13,8 +13,8 @@ type ImportResult = {
 };
 
 const example = `name,price,stock,description,category,images
-"Casque audio premium",125000,15,"Réduction de bruit active, 30h d'autonomie","Audio & Son","https://example.com/img1.jpg|https://example.com/img2.jpg"
-"Mini frigo solaire",450000,3,"Frigo basse consommation 12V","Énergie solaire","https://example.com/frigo.jpg"`;
+"Casque audio premium",125000,15,"Réduction de bruit active, 30h d'autonomie","Audio & Son","https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+"Mini frigo solaire",450000,3,"Frigo basse consommation 12V","Énergie solaire","https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=800&q=80"`;
 
 export function ProductImportForm() {
   const router = useRouter();

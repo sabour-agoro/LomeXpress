@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Explorez toutes les catégories disponibles sur LomExpress.",
 };
 
+export const revalidate = 60;
+
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
     where: { parentId: null },

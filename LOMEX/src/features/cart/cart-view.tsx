@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/features/cart/cart-provider";
-import { formatXOF } from "@/lib/utils";
+import { formatXOF, isDisplayableImageSrc } from "@/lib/utils";
 
 export function CartView() {
   const router = useRouter();
@@ -74,7 +74,7 @@ export function CartView() {
       toast.success("Commande créée", {
         description: `Référence ${data.order.reference}`,
       });
-      router.push(`/commande/confirmation?reference=${data.order.reference}&wa=${encodeURIComponent(data.whatsappUrl)}`);
+      router.push(`/commande/confirmation?reference=${data.order.reference}`);
     } catch (error) {
       console.error(error);
       toast.error("Une erreur réseau est survenue.");
@@ -109,7 +109,13 @@ export function CartView() {
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-white/5">
                 {item.image && (
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+                  <Image
+                    src={isDisplayableImageSrc(item.image)}
+                    alt={item.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
                 )}
               </div>
               <div className="flex-1">

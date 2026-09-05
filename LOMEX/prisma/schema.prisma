@@ -64,6 +64,7 @@ model Product {
   @@index([categoryId])
   @@index([isPopular])
   @@index([isNew])
+  @@index([isPublished])
 }
 
 model Order {
@@ -85,6 +86,7 @@ model Order {
 
   @@index([status])
   @@index([createdAt])
+  @@index([userId])
 }
 
 model OrderItem {
@@ -98,6 +100,7 @@ model OrderItem {
   nameSnapshot String
 
   @@index([orderId])
+  @@index([productId])
 }
 
 model SpecialRequest {
@@ -119,6 +122,7 @@ model SpecialRequest {
 
   @@index([status])
   @@index([createdAt])
+  @@index([userId])
 }
 
 model Message {

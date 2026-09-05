@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { orderStatusUpdateSchema } from "@/lib/schemas";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-  return null;
-}
+import { requireAdmin } from "@/lib/require-admin";
 
 export async function PATCH(
   request: Request,
@@ -31,33 +23,60 @@ export async function PATCH(
   });
   if (!order) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
 
+  const logs = await prisma.stockLog.findMany({
+    where: { reference: order.reference },
+    select: { reason: true, delta: true },
+  });
+  const hasReservation = logs.some((log) => log.reason === "ORDER" && log.delta < 0);
+  const hasRestore = logs.some((log) => log.reason === "ORDER_CANCEL" && log.delta > 0);
+
   if (parsed.data.status === "CONFIRMED" && order.status === "PENDING") {
-    await prisma.$transaction([
-      prisma.order.update({
-        where: { id },
-        data: { status: "CONFIRMED" },
-      }),
-      ...order.items.map((item) =>
-        prisma.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        }),
-      ),
-      ...order.items.map((item) =>
-        prisma.stockLog.create({
-          data: {
+    if (hasReservation) {
+      await prisma.order.update({ where: { id }, data: { status: "CONFIRMED" } });
+      return NextResponse.json({ status: "CONFIRMED" });
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          const reserved = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (reserved.count !== 1) {
+            throw new Error(`STOCK:${item.nameSnapshot}`);
+          }
+        }
+        await tx.order.update({ where: { id }, data: { status: "CONFIRMED" } });
+        await tx.stockLog.createMany({
+          data: order.items.map((item) => ({
             productId: item.productId,
             delta: -item.quantity,
             reason: "ORDER",
             reference: order.reference,
-          },
-        }),
-      ),
-    ]);
+          })),
+        });
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (message.startsWith("STOCK:")) {
+        return NextResponse.json(
+          { error: `Stock insuffisant pour ${message.slice(6)}.` },
+          { status: 400 },
+        );
+      }
+      throw error;
+    }
     return NextResponse.json({ status: "CONFIRMED" });
   }
 
-  if (parsed.data.status === "CANCELLED" && order.status === "CONFIRMED") {
+  const shouldRestore =
+    parsed.data.status === "CANCELLED" &&
+    (order.status === "PENDING" || order.status === "CONFIRMED") &&
+    hasReservation &&
+    !hasRestore;
+
+  if (shouldRestore) {
     await prisma.$transaction([
       prisma.order.update({ where: { id }, data: { status: "CANCELLED" } }),
       ...order.items.map((item) =>
@@ -71,8 +90,8 @@ export async function PATCH(
           data: {
             productId: item.productId,
             delta: item.quantity,
-            reason: "ADJUSTMENT",
-            reference: `Annulation ${order.reference}`,
+            reason: "ORDER_CANCEL",
+            reference: order.reference,
           },
         }),
       ),

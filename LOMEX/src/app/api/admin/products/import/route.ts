@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseCsv } from "@/lib/csv";
 import { slugify } from "@/lib/utils";
+import { requireAdmin } from "@/lib/require-admin";
 
 const REQUIRED_HEADERS = ["name", "price", "stock", "description", "category", "images"];
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard) return guard;
 
   try {
     const text = await request.text();
@@ -38,9 +36,11 @@ export async function POST(request: Request) {
     images: headers.indexOf("images"),
   };
 
-  const categories = await prisma.category.findMany();
-  // Map par slug pour éviter les conflits d'unicité (ex: Audio vs Àudio)
+  const categories = await prisma.category.findMany({ select: { id: true, slug: true } });
   const categoryMap = new Map(categories.map((c) => [c.slug, c.id]));
+  const existingSlugs = new Set(
+    (await prisma.product.findMany({ select: { slug: true } })).map((p) => p.slug),
+  );
   const errors: { line: number; message: string }[] = [];
   let imported = 0;
 
@@ -99,9 +99,10 @@ export async function POST(request: Request) {
 
     let slug = slugify(name);
     let suffix = 1;
-    while (await prisma.product.findUnique({ where: { slug } })) {
+    while (existingSlugs.has(slug)) {
       slug = `${slugify(name)}-${suffix++}`;
     }
+    existingSlugs.add(slug);
 
     try {
       const product = await prisma.product.create({

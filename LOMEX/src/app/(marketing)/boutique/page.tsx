@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "Catalogue complet LomExpress : téléphones, ordinateurs, énergie solaire et plus.",
 };
 
+export const revalidate = 60;
+
 type SearchParams = {
   q?: string;
   categorie?: string;
@@ -78,7 +80,7 @@ export default async function ShopPage({
 
           {products.length === 0 ? (
             <div className="mt-10 rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-              <p className="text-lg font-semibold">Aucun produit ne correspond a votre recherche.</p>
+              <p className="text-lg font-semibold">Aucun produit ne correspond à votre recherche.</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Essayez une autre recherche, ou demandez une{" "}
                 <Link href="/commande-speciale" className="text-primary underline">

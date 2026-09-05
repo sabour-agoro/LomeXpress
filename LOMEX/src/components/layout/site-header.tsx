@@ -22,7 +22,7 @@ export function SiteHeader() {
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-display text-xl font-bold">
           <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-sm">
-            <Image src={LogoImg} alt={siteConfig.name} fill className="object-cover" />
+            <Image src={LogoImg} alt={siteConfig.name} fill sizes="40px" className="object-cover" />
           </div>
           <span className="text-base font-bold text-primary tracking-tight">{siteConfig.name}</span>
         </Link>

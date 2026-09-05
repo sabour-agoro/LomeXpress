@@ -10,10 +10,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "cdn.lomexpress.tg" },
-      { protocol: "https", hostname: "th.bing.com" },
-      { protocol: "https", hostname: "*.bing.com" },
-      { protocol: "https", hostname: "example.com" },
-      { protocol: "http", hostname: "example.com" },
     ],
   },
 };

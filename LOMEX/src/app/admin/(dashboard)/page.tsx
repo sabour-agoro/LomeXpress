@@ -63,12 +63,6 @@ export default async function AdminDashboardPage() {
     },
   ];
 
-  const adminHighlights = [
-    { label: "Clics chat", value: "1,284", color: "bg-brand-500" },
-    { label: "Conversion", value: "8.4%", color: "bg-accent" },
-    { label: "Panier moyen", value: "42,500 FCFA", color: "bg-emerald-500" },
-  ];
-
   return (
     <div className="space-y-8">
       <header>
@@ -183,21 +177,6 @@ export default async function AdminDashboardPage() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-        <h2 className="font-display text-lg font-semibold">Dashboard chat & conversion</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {adminHighlights.map((highlight) => (
-            <div key={highlight.label} className="rounded-2xl border border-border bg-muted/40 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{highlight.label}</p>
-              <p className="mt-2 text-xl font-bold">{highlight.value}</p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-                <div className={`h-2 w-3/4 rounded-full ${highlight.color}`} />
-              </div>
-            </div>
-          ))}
         </div>
       </section>
     </div>

@@ -24,6 +24,9 @@ export function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+export const FALLBACK_PRODUCT_IMAGE =
+  "https://images.unsplash.com/photo-1586892477838-2b96e85e0f96?auto=format&fit=crop&w=800&q=80";
+
 export function parseProductImages(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {
@@ -32,6 +35,34 @@ export function parseProductImages(raw: string | null | undefined): string[] {
   } catch {
     return [];
   }
+}
+
+function isDisplayableImageUrl(src: string) {
+  if (src.startsWith("/")) return true;
+  try {
+    const { hostname, protocol } = new URL(src);
+    if (protocol !== "http:" && protocol !== "https:") return false;
+    return hostname !== "example.com" && !hostname.endsWith(".example.com");
+  } catch {
+    return false;
+  }
+}
+
+export function filterDisplayableImages(urls: string[]) {
+  return urls.filter(isDisplayableImageUrl);
+}
+
+export function displayProductImages(raw: string | null | undefined): string[] {
+  return filterDisplayableImages(parseProductImages(raw));
+}
+
+export function productCover(raw: string | null | undefined, fallback = FALLBACK_PRODUCT_IMAGE) {
+  return displayProductImages(raw)[0] ?? fallback;
+}
+
+export function isDisplayableImageSrc(src: string | null | undefined, fallback = FALLBACK_PRODUCT_IMAGE) {
+  if (!src) return fallback;
+  return isDisplayableImageUrl(src) ? src : fallback;
 }
 
 export function generateReference(prefix: string) {

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { formatXOF, parseProductImages } from "@/lib/utils";
+import { formatXOF, productCover } from "@/lib/utils";
 import { LOW_STOCK_THRESHOLD } from "@/lib/enums";
 import { AddToCartButton } from "@/features/cart/add-to-cart-button";
 
@@ -24,10 +24,7 @@ export function ProductCard({
   product: ProductCardProduct;
   priority?: boolean;
 }) {
-  const images = parseProductImages(product.images);
-  const cover =
-    images[0] ??
-    "https://images.unsplash.com/photo-1586892477838-2b96e85e0f96?auto=format&fit=crop&w=800&q=80";
+  const cover = productCover(product.images);
   const isLowStock = product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   return (

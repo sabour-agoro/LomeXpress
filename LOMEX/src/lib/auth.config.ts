@@ -7,23 +7,25 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role ?? "CLIENT";
-        token.uid = (user as { id?: string }).id ?? "";
+        token.role = user.role ?? "CLIENT";
+        token.uid = user.id ?? "";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role = (token.role as string) ?? "CLIENT";
-        (session.user as { id?: string }).id = (token.uid as string) ?? "";
+        session.user.role = token.role ?? "CLIENT";
+        session.user.id = token.uid ?? "";
       }
       return session;
     },
     authorized({ auth, request }) {
-      const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-      const isLogin = request.nextUrl.pathname === "/admin/login";
-      if (!isAdminRoute || isLogin) return true;
-      return Boolean(auth?.user && (auth.user as { role?: string }).role === "ADMIN");
+      const path = request.nextUrl.pathname;
+      const isLogin = path === "/admin/login";
+      const isAdminPage = path.startsWith("/admin") && !isLogin;
+      const isAdminApi = path.startsWith("/api/admin") || path === "/api/upload";
+      if (!isAdminPage && !isAdminApi) return true;
+      return Boolean(auth?.user && auth.user.role === "ADMIN");
     },
   },
 } satisfies NextAuthConfig;

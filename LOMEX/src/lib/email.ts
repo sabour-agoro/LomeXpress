@@ -43,6 +43,15 @@ export async function sendEmail(payload: EmailPayload): Promise<{ ok: boolean; r
   }
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export async function notifyAdminNewOrder(args: {
   reference: string;
   total: number;
@@ -53,11 +62,11 @@ export async function notifyAdminNewOrder(args: {
   if (!adminEmail) return { ok: false, reason: "ADMIN_EMAIL missing" };
   return sendEmail({
     to: adminEmail,
-    subject: `🛒 Nouvelle commande ${args.reference}`,
+    subject: `Nouvelle commande ${args.reference}`,
     html: `
       <h2>Nouvelle commande LomExpress</h2>
-      <p><strong>Référence :</strong> ${args.reference}</p>
-      <p><strong>Client :</strong> ${args.customerName} (${args.customerPhone})</p>
+      <p><strong>Référence :</strong> ${escapeHtml(args.reference)}</p>
+      <p><strong>Client :</strong> ${escapeHtml(args.customerName)} (${escapeHtml(args.customerPhone)})</p>
       <p><strong>Total :</strong> ${args.total.toLocaleString("fr-FR")} FCFA</p>
     `,
   });

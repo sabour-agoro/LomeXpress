@@ -1,16 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { productInputSchema } from "@/lib/schemas";
 import { slugify } from "@/lib/utils";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-  return null;
-}
+import { requireAdmin } from "@/lib/require-admin";
 
 export async function POST(request: Request) {
   const guard = await requireAdmin();

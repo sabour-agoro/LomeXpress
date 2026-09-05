@@ -52,7 +52,19 @@ export const productInputSchema = z.object({
   description: z.string().min(10).max(5000),
   price: z.number().int().nonnegative(),
   stock: z.number().int().nonnegative().default(0),
-  images: z.array(z.string().url()).default([]),
+  images: z
+    .array(
+      z.string().min(1).refine((value) => {
+        if (value.startsWith("/")) return true;
+        try {
+          const url = new URL(value);
+          return url.protocol === "http:" || url.protocol === "https:";
+        } catch {
+          return false;
+        }
+      }, "URL d'image invalide"),
+    )
+    .default([]),
   isPopular: z.boolean().default(false),
   isNew: z.boolean().default(true),
   isPublished: z.boolean().default(true),

@@ -34,7 +34,7 @@ export function AdminSidebar() {
       <div className="px-4 py-4">
         <Link href="/admin" className="flex items-center gap-2 font-display text-base font-bold">
           <div className="relative h-8 w-8 overflow-hidden rounded-xl">
-            <Image src={LogoImg} alt="Lome Xpress" fill className="object-cover" />
+            <Image src={LogoImg} alt="Lome Xpress" fill sizes="32px" className="object-cover" />
           </div>
           <span className="text-primary">Lome Xpress</span>
         </Link>

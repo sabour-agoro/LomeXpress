@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
+import { formatXOF } from "@/lib/utils";
+import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Commande confirmée",
@@ -11,9 +14,34 @@ export const metadata: Metadata = {
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reference?: string; wa?: string }>;
+  searchParams: Promise<{ reference?: string }>;
 }) {
-  const { reference, wa } = await searchParams;
+  const { reference } = await searchParams;
+  const order = reference
+    ? await prisma.order.findUnique({
+        where: { reference },
+        include: { items: true },
+      })
+    : null;
+
+  let whatsappUrl: string | null = null;
+  if (order) {
+    const messageLines = [
+      `Bonjour LomExpress, je souhaite passer la commande ${order.reference} :`,
+      "",
+      ...order.items.map(
+        (item) =>
+          `• ${item.quantity} × ${item.nameSnapshot} — ${formatXOF(item.unitPrice * item.quantity)}`,
+      ),
+      "",
+      `Total : ${formatXOF(order.total)}`,
+      `Nom : ${order.customerName}`,
+      `Téléphone : ${order.customerPhone}`,
+    ];
+    if (order.notes) messageLines.push(`Notes : ${order.notes}`);
+    const cleanPhone = siteConfig.whatsappNumber.replace(/[^0-9]/g, "");
+    whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageLines.join("\n"))}`;
+  }
 
   return (
     <div className="container-page py-20">
@@ -35,9 +63,9 @@ export default async function ConfirmationPage({
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          {wa && (
+          {whatsappUrl && (
             <Button asChild size="lg">
-              <a href={wa} target="_blank" rel="noopener noreferrer">
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />
                 Ouvrir WhatsApp
               </a>

@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, filterDisplayableImages } from "@/lib/utils";
 
 export function ProductGallery({ images, productName }: { images: string[]; productName: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const visibleImages = filterDisplayableImages(images);
 
-  if (!images || images.length === 0) {
+  if (!visibleImages.length) {
     return (
       <div className="relative aspect-square overflow-hidden rounded-3xl border border-border bg-card flex items-center justify-center text-muted-foreground">
         Aucune image
@@ -15,7 +16,7 @@ export function ProductGallery({ images, productName }: { images: string[]; prod
     );
   }
 
-  const mainImage = images[activeIndex];
+  const mainImage = visibleImages[activeIndex];
 
   return (
     <div className="space-y-3">
@@ -30,9 +31,9 @@ export function ProductGallery({ images, productName }: { images: string[]; prod
         />
       </div>
 
-      {images.length > 1 && (
+      {visibleImages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
-          {images.map((src, index) => (
+          {visibleImages.map((src, index) => (
             <button
               key={`${src}-${index}`}
               onClick={() => setActiveIndex(index)}
@@ -46,7 +47,8 @@ export function ProductGallery({ images, productName }: { images: string[]; prod
               <Image 
                 src={src} 
                 alt={`${productName} - Miniature ${index + 1}`} 
-                fill 
+                fill
+                sizes="80px"
                 className="object-cover" 
               />
             </button>

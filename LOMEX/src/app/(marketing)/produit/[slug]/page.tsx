@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ShieldCheck, Truck } from "lucide-react";
@@ -11,8 +10,10 @@ import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/shop/product-gallery";
 import { AddToCartButton } from "@/features/cart/add-to-cart-button";
 import { WhatsAppQuickOrderButton } from "@/features/cart/whatsapp-quick-order-button";
-import { formatXOF, parseProductImages, truncate } from "@/lib/utils";
+import { formatXOF, parseProductImages, productCover, truncate } from "@/lib/utils";
 import { LOW_STOCK_THRESHOLD } from "@/lib/enums";
+
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -48,7 +49,7 @@ export default async function ProductPage({
   if (!product || !product.isPublished) notFound();
 
   const images = parseProductImages(product.images);
-  const cover = images[0];
+  const cover = productCover(product.images);
 
   const related = await prisma.product.findMany({
     where: {

@@ -6,12 +6,13 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(1),
 });
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,
+  trustHost: true,
   providers: [
     Credentials({
       name: "Credentials",

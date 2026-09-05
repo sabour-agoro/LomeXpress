@@ -24,7 +24,7 @@ export default function SpecialOrderPage() {
             <Globe2 className="h-3.5 w-3.5 text-accent" /> Commande spéciale
           </span>
           <h1 className="font-display text-3xl font-bold leading-tight md:text-5xl">
-            Importez n&apos;importe quel produit, <span className="text-primary">livre chez vous</span>.
+            Importez n&apos;importe quel produit, <span className="text-primary">livré chez vous</span>.
           </h1>
           <p className="text-muted-foreground">
             Collez le lien de votre produit favori : Alibaba, AliExpress, Amazon, Shein, eBay…

@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_APP_NAME ?? "Lome Xpress",
   description:
-    "Service de conciergerie et logistique premium a Lome : livraison locale 24h, import express Europe/USA et securite garantie.",
+    "Service de conciergerie et logistique premium à Lomé : livraison locale 24h, import express Europe/USA et sécurité garantie.",
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "22871793479",
   slogan: "L'excellence logistique au quotidien.",
