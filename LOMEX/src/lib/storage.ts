@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 export const MAX_UPLOAD_FILES = 8;
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -67,6 +66,7 @@ function cloudinarySignature(params: Record<string, string | number>, secret: st
 }
 
 async function uploadToCloudflareR2(buffer: Buffer, mime: string, extension: string) {
+  const [{ PutObjectCommand, S3Client }] = await Promise.all([import("@aws-sdk/client-s3")]);
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID!;
   const bucket = process.env.CLOUDFLARE_R2_BUCKET!;
   const publicBase = process.env.CLOUDFLARE_R2_PUBLIC_BASE_URL!.replace(/\/$/, "");
