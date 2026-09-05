@@ -55,13 +55,49 @@ prisma/                  # schema + seed
 
 ## Passer en production
 
-1. Provisionner une base PostgreSQL (Neon, Supabase, Railway…).
-2. Dans `prisma/schema.prisma`, remplacer `provider = "sqlite"` par `provider = "postgresql"` puis exécuter :
+Le site public (`/`) et l’admin (`/admin`) sont **la même app Next.js**. Un seul déploiement suffit.
+
+**Important :** SQLite et `public/uploads` ne survivent pas sur Vercel (fonctions serverless, pas de disque persistant). En prod : **PostgreSQL + Cloudinary**.
+
+### Option recommandée — Vercel + Neon + Cloudinary (gratuit au départ)
+
+1. Compte [Cloudinary](https://cloudinary.com) → Dashboard → copier Cloud name, API Key, API Secret.
+2. Base [Neon](https://neon.tech) (ou [Supabase](https://supabase.com)) → copier `DATABASE_URL` PostgreSQL.
+3. Dans `prisma/schema.prisma`, remplacer `provider = "sqlite"` par `provider = "postgresql"`.
+4. En local, avec l’URL Neon dans `.env` :
    ```bash
-   pnpm exec prisma migrate dev --name init
+   pnpm exec prisma db push
+   pnpm db:seed
    ```
-3. Définir les variables d'environnement en production (Vercel, Render…).
-4. Activer Resend en renseignant `RESEND_API_KEY` (envoi des notifications admin).
+5. Push GitHub, import du repo sur [Vercel](https://vercel.com).
+6. Variables d’environnement Vercel (Production + Preview) :
+   - `DATABASE_URL` (Neon)
+   - `AUTH_SECRET` (ex. `openssl rand -base64 32`)
+   - `AUTH_TRUST_HOST=true`
+   - `AUTH_URL` / `NEXT_PUBLIC_APP_URL` = `https://ton-domaine.vercel.app`
+   - `NEXT_PUBLIC_WHATSAPP_NUMBER`
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+   - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET`
+   - `CLOUDINARY_FOLDER=lomexpress`
+7. Deploy. Login admin : `https://ton-domaine.vercel.app/admin/login`
+
+Les images uploadées dans l’admin partent sur Cloudinary (URLs `https://res.cloudinary.com/...`) et restent en base produit.
+
+### Autres solutions
+
+| Hébergeur | Pour qui | Base | Images | Prix / contrainte |
+|-----------|----------|------|--------|-------------------|
+| **Vercel + Neon + Cloudinary** | Défaut, simple | Neon Postgres | Cloudinary | Gratuit puis payant |
+| **Railway** | Tout-en-un | Postgres Railway | Cloudinary (ou volume) | Plus simple pour un disque, un peu plus cher |
+| **Render** | Alternative Vercel | Render Postgres | Cloudinary | Cold start sur le free web |
+| **VPS** (Contabo, Hetzner, DigitalOcean) + Coolify/Dokploy | Contrôle total | Postgres sur le VPS | Dossier `/uploads` persistant | Tu gères OS, backups, HTTPS |
+
+Railway / un VPS permettent un disque persistant (moins besoin de Cloudinary), mais Vercel reste le plus simple pour Next.js.
+
+### Backups
+
+- **Données** : backups automatiques Neon/Supabase, ou `pg_dump` hebdo.
+- **Images** : Cloudinary Media Library (backup / CDN inclus).
 
 ## Roadmap MVP → Phase 2
 
