@@ -46,7 +46,7 @@ export function ChatInterface() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          const formatted = data.map((msg: any) => ({
+          const formatted: ChatMessage[] = data.map((msg: { id: string; authorRole?: string; body: string }) => ({
             id: msg.id,
             author: msg.authorRole === "ADMIN" ? "agent" : "customer",
             content: msg.body,
