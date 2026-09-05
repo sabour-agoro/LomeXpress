@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 export const MAX_UPLOAD_FILES = 8;
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -11,15 +12,48 @@ export const ALLOWED_IMAGE_TYPES: Record<string, string> = {
   "image/gif": ".gif",
 };
 
-function hasCloudinary() {
+function hasCloudflareR2() {
   return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET,
+    process.env.CLOUDFLARE_ACCOUNT_ID &&
+      process.env.CLOUDFLARE_R2_ACCESS_KEY_ID &&
+      process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY &&
+      process.env.CLOUDFLARE_R2_BUCKET &&
+      process.env.CLOUDFLARE_R2_PUBLIC_BASE_URL,
   );
 }
 
-export function getStorageDriver(): "cloudinary" | "local" {
+function cloudinaryConfig() {
+  if (
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  ) {
+    return {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_API_SECRET,
+    };
+  }
+  const raw = process.env.CLOUDINARY_URL;
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    const cloudName = parsed.hostname;
+    const apiKey = decodeURIComponent(parsed.username);
+    const apiSecret = decodeURIComponent(parsed.password);
+    if (cloudName && apiKey && apiSecret) return { cloudName, apiKey, apiSecret };
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function hasCloudinary() {
+  return Boolean(cloudinaryConfig());
+}
+
+export function getStorageDriver(): "cloudflare-r2" | "cloudinary" | "local" {
+  if (hasCloudflareR2()) return "cloudflare-r2";
   if (hasCloudinary()) return "cloudinary";
   return "local";
 }
@@ -32,10 +66,37 @@ function cloudinarySignature(params: Record<string, string | number>, secret: st
   return createHash("sha1").update(`${payload}${secret}`).digest("hex");
 }
 
+async function uploadToCloudflareR2(buffer: Buffer, mime: string, extension: string) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID!;
+  const bucket = process.env.CLOUDFLARE_R2_BUCKET!;
+  const publicBase = process.env.CLOUDFLARE_R2_PUBLIC_BASE_URL!.replace(/\/$/, "");
+  const key = `lomexpress/${Date.now()}-${randomBytes(6).toString("hex")}${extension}`;
+
+  const client = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: mime,
+    }),
+  );
+
+  return `${publicBase}/${key}`;
+}
+
 async function uploadToCloudinary(buffer: Buffer, mime: string, folder: string) {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;
-  const apiKey = process.env.CLOUDINARY_API_KEY!;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET!;
+  const config = cloudinaryConfig();
+  if (!config) throw new Error("Cloudinary n'est pas configuré");
+  const { cloudName, apiKey, apiSecret } = config;
   const timestamp = Math.round(Date.now() / 1000);
   const params = { folder, timestamp };
   const signature = cloudinarySignature(params, apiSecret);
@@ -71,13 +132,14 @@ export async function storeImage(buffer: Buffer, mime: string) {
   if (!extension) throw new Error("Type d'image non autorisé");
 
   const driver = getStorageDriver();
+  if (driver === "cloudflare-r2") return uploadToCloudflareR2(buffer, mime, extension);
   if (driver === "cloudinary") {
     return uploadToCloudinary(buffer, mime, process.env.CLOUDINARY_FOLDER ?? "lomexpress");
   }
 
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "Stockage local impossible en production. Configurez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET.",
+      "Stockage local impossible en production. Configurez Cloudflare R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_R2_*) ou Cloudinary.",
     );
   }
 

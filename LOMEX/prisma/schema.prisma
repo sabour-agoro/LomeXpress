@@ -1,7 +1,5 @@
-// Schema Prisma LomExpress
-// Provider: SQLite pour le developpement local rapide (zero config).
-// Pour la production: remplacer provider par "postgresql" et fournir DATABASE_URL Postgres (Neon / Supabase).
-// Les statuts sont stockes en String et valides via Zod (cf. src/lib/enums.ts).
+// Schema Prisma LomExpress — PostgreSQL (Neon).
+// Le fichier SQLite local n'est plus utilise une fois DATABASE_URL = Neon.
 
 generator client {
   provider      = "prisma-client-js"
@@ -9,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
